@@ -1,17 +1,29 @@
-var createError = require("http-errors");
-var express = require("express");
-var path = require("path");
-var cookieParser = require("cookie-parser");
-var logger = require("morgan");
+const createError = require("http-errors");
+const express = require("express");
+const path = require("path");
+const cookieParser = require("cookie-parser");
+const logger = require("morgan");
 const methodOverride = require("method-override");
 const mysql = require("mysql");
 const util = require("util");
+const session = require("express-session");
 
-var indexRouter = require("./routes/index");
-var usersRouter = require("./routes/users");
-var authRouter = require("./routes/auth");
+const indexRouter = require("./routes/index");
+const usersRouter = require("./routes/users");
+const authRouter = require("./routes/auth");
 
-var app = express();
+const app = express();
+
+// Express-session
+app.use(
+  session({
+    secret: "secret",
+    resave: false,
+    saveUninitialized: true,
+    name: "cookie",
+    cookie: { maxAge: 24 * 60 * 60 * 7 * 1000 },
+  })
+);
 
 require("dotenv").config();
 
