@@ -3,6 +3,9 @@ const router = express.Router();
 const bcrypt = require("bcrypt");
 const session = require("express-session");
 
+// Middleware
+const verifyAuth = require("../middleware/auth.middleware");
+
 // Express-session
 router.use(
   session({
@@ -20,11 +23,11 @@ router.get("/login", function (req, res, next) {
 });
 
 /* POST login */
-router.post("/login", async (req, res) => {
+router.post("/login", async (req, res, next) => {
   const email = req.body.email;
   const password = req.body.password;
   await query(
-    "SELECT email, password FROM user WHERE email = ?",
+    "SELECT id, email, password, roleId FROM user WHERE email = ?",
     [email],
     (err, result) => {
       if (err || result.length === 0) {
@@ -41,17 +44,20 @@ router.post("/login", async (req, res) => {
           }
           if (success) {
             await query(
-              "SELECT * FROM user WHERE email = ? AND password = ?",
+              "SELECT id, email, password, roleId FROM user WHERE email = ? AND password = ?",
               [email, result[0].password],
               function (err, results) {
+                console.log("");
                 if (results.length) {
                   req.session.loggedin = true;
-                  req.session.id = result[0].id;
+                  req.session.cookie.expires = false;
+                  req.session.cookie.maxAge = 5 * 60 * 1000;
+                  req.session.userId = result[0].id;
                   req.session.email = result[0].email;
                   req.session.password = result[0].password;
                   req.session.roleId = result[0].roleId;
-                  res.redirect("/users/list");
                   console.log("req.session :", req.session);
+                  res.redirect("/users/list");
                 } else {
                   res.send(err);
                 }
@@ -67,12 +73,12 @@ router.post("/login", async (req, res) => {
 });
 
 /* GET register page. */
-router.get("/register", function (req, res, next) {
+router.get("/register", verifyAuth, function (req, res, next) {
   res.render("register", { title: "S'inscrire" });
 });
 
 /* POST register page. */
-router.post("/register", async (req, res) => {
+router.post("/register", async (req, res, next) => {
   const email = req.body.email;
   const password = req.body.password;
 
@@ -92,7 +98,7 @@ router.post("/register", async (req, res) => {
             hash +
             "', 2)"
         );
-        res.send("Compte créé");
+        res.redirect("/users/list");
       });
     }
   } catch (err) {

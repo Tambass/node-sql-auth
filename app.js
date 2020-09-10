@@ -40,6 +40,9 @@ app.use(express.static(path.join(__dirname, "public")));
 // Method OverRide
 app.use(methodOverride("_method"));
 
+// Middleware
+const verifyAuth = require("./middleware/auth.middleware");
+
 app.use("/", indexRouter);
 app.use("/users", usersRouter);
 app.use("/auth", authRouter);
